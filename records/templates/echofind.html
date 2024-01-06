@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Documents</title>
+</head>
+<body>
+    <h1>Upload MP4 File</h1>
+    <form method="post" enctype="multipart/form-data" action="{% url 'handle_upload' %}">
+        {% csrf_token %}
+        <input type="file" name="mp4file" accept="video/*">
+        <input type="submit" value="Upload">
+    </form>
+
+    <h2>Files in the bucket</h2>
+    <form id="searchForm">
+        <input type="text" id="searchInput" placeholder="Search...">
+        <button type="button" onclick="searchFiles()">Search</button>
+    </form>
+
+    <h3>Search Results</h3>
+    <ul id="searchResults"></ul>
+
+    <h2>Files in the bucket</h2>
+    <ul>
+        {% for file in files_list %}
+        <li>
+             <a href="{% url 'download_file' file_name=file %}">{{ file }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+
+<script>
+        function searchFiles() {
+            var keyword = document.getElementById("searchInput").value;
+            var url = "{% url 'search_files' %}?keyword=" + keyword;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    var resultsList = document.getElementById("searchResults");
+                    resultsList.innerHTML = "";
+
+                    data.results.forEach(result => {
+                        var listItem = document.createElement("li");
+                        listItem.innerHTML = `<a href="${result.url}">${result.mp4name}</a> - ${result.text}`;
+                        resultsList.appendChild(listItem);
+                    });
+                });
+        }
+    </script>
+</body>
+</html>
