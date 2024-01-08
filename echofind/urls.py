@@ -18,10 +18,9 @@ from django.urls import path
 from records.views import render_main_page, handle_upload, download_file, search_files
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path("", render_main_page, name='render_main_page'),
-    path("handle_upload/", handle_upload, name='handle_upload'),
-    path('download/<path:file_name>/', download_file, name='download_file'),
-    path('search/', search_files, name='search_files')
-
+    path("admin/", admin.site.urls),
+    path("", render_main_page, name="render_main_page"),
+    path("handle_upload/", handle_upload, name="handle_upload"),
+    path("download/<path:file_name>/", download_file, name="download_file"),
+    path("search/", search_files, name="search_files"),
 ]
