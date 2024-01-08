@@ -30,28 +30,32 @@ def get_connection_with_database():
     return es
 
 
+def index_transcription(file_name: str, transcription: str):
+    es = get_connection_with_database()
+    es.index(
+        index="my_index",
+        body={
+            "mp4name": file_name,
+            "text": transcription,
+        },
+    )
+
+
+# todo: perf - don't create temporary files, find another way to put mp4 bytes from request into the whisper
 def handle_upload(request):
     if request.method == "POST" and request.FILES["mp4file"]:
         mp4file = request.FILES["mp4file"]
 
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file_path = temp_file.name
-            with open(temp_file_path, "wb") as file:
-                file.write(mp4file.read())
+            with open(temp_file_path, "wb") as temp_file_io:
+                temp_file_io.write(mp4file.read())
 
-            model = whisper.load_model("base")
-            result = model.transcribe(temp_file_path)
-
-            es = get_connection_with_database()
-            es.index(
-                index="my_index",
-                body={
-                    "mp4name": mp4file.name,
-                    "text": result["text"],
-                },
-            )
-
+            whisper_instance = whisper.load_model("base")
+            video_transcription = whisper_instance.transcribe(temp_file_path)
             connection_with_storage = get_connection_with_storage()
+
+            index_transcription(mp4file.name, video_transcription["text"])
             connection_with_storage.upload_file(temp_file_path, bucket_name, mp4file.name)
 
     return HttpResponseRedirect("/")
@@ -71,34 +75,36 @@ def generate_file_response(file_body_content, content_type, file_name):
 
 
 def download_file(request, file_name):
+    content_type = mimetypes.guess_type(file_name)[0]
+
     connection_with_storage = get_connection_with_storage()
     file = connection_with_storage.get_object(Bucket=bucket_name, Key=file_name)
     file_body_content = file["Body"].read()
-    content_type = mimetypes.guess_type(file_name)[0]
 
     response = generate_file_response(file_body_content, content_type, file_name)
-
     return response
 
 
 def search_files(request):
-    keyword = request.GET.get("keyword", "")
-
     es = get_connection_with_database()
-
+    keyword = request.GET.get("keyword", "")
     search_query = {"query": {"match": {"text": keyword}}}
+
     hits = es.search(index="my_index", body=search_query).get("hits", {}).get("hits", [])
 
-    response_data = [
+    # todo: suggestion - maybe a dictionary? like {mp4name: {text:value, url:value}, mp4name: {...}, ...}
+    results_details = [
         {
-            "mp4name": hit["_source"].get("mp4name", ""),
-            "text": hit["_source"].get("text", ""),
+            "mp4name": hit["_source"].get(
+                "mp4name", ""
+            ),  # todo: shouldn't we response with 404 when the file doesn't exist? currently we'll serve empty string - 'get("mp4name", "")
+            "text": hit["_source"].get("text", ""),  # todo: same
             "url": reverse("download_file", kwargs={"file_name": hit["_source"].get("mp4name")}),
         }
         for hit in hits
     ]
 
-    return JsonResponse({"results": response_data})
+    return JsonResponse({"results": results_details})
 
 
 def render_main_page(request):
