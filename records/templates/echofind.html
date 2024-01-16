@@ -40,11 +40,19 @@
                     var resultsList = document.getElementById("searchResults");
                     resultsList.innerHTML = "";
 
-                    data.results.forEach(result => {
-                        var listItem = document.createElement("li");
-                        listItem.innerHTML = `<a href="${result.url}">${result.mp4name}</a> - ${result.text}`;
-                        resultsList.appendChild(listItem);
-                    });
+                    if (data.results) {
+                        for (const mp4name in data.results) {
+                            const result = data.results[mp4name];
+                            var listItem = document.createElement("li");
+                            listItem.innerHTML = `<a href="${result.url}">${mp4name}</a> - ${result.text}`;
+                            resultsList.appendChild(listItem);
+                        }
+                    }
+                    else {
+                        var noResultsItem = document.createElement("li");
+                        noResultsItem.innerHTML = "No results";
+                        resultsList.appendChild(noResultsItem);
+                    }
                 });
         }
     </script>
