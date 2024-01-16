@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse, Http404, HttpResponseNotFound
 from django.urls import reverse
 from django.shortcuts import render
 from elasticsearch import Elasticsearch
@@ -92,19 +92,18 @@ def search_files(request):
 
     hits = es.search(index="my_index", body=search_query).get("hits", {}).get("hits", [])
 
-    # todo: suggestion - maybe a dictionary? like {mp4name: {text:value, url:value}, mp4name: {...}, ...}
-    results_details = [
-        {
-            "mp4name": hit["_source"].get(
-                "mp4name", ""
-            ),  # todo: shouldn't we response with 404 when the file doesn't exist? currently we'll serve empty string - 'get("mp4name", "")
-            "text": hit["_source"].get("text", ""),  # todo: same
-            "url": reverse("download_file", kwargs={"file_name": hit["_source"].get("mp4name")}),
-        }
-        for hit in hits
-    ]
+    results_details = {}
+    for hit in hits:
+        key = hit["_source"].get("mp4name", "")
+        details_dict = {}
+        details_dict["text"] = hit["_source"].get("text", "")
+        details_dict["url"] = reverse("download_file", kwargs={"file_name": hit["_source"].get("mp4name")}),
+        results_details[key] = details_dict
 
-    return JsonResponse({"results": results_details})
+    if not results_details:
+        return JsonResponse({"message": "No results"}, status=404)
+
+    return JsonResponse({"results": results_details}, status=200)
 
 
 def render_main_page(request):
