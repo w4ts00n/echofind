@@ -41,22 +41,21 @@ def index_transcription(file_name: str, transcription: str):
     )
 
 
-# todo: perf - don't create temporary files, find another way to put mp4 bytes from request into the whisper
 def handle_upload(request):
-    if request.method == "POST" and request.FILES["mp4file"]:
-        mp4file = request.FILES["mp4file"]
+    if request.method != "POST" or not request.FILES["mp4file"]:
+        return HttpResponseRedirect("/")
 
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            temp_file_path = temp_file.name
-            with open(temp_file_path, "wb") as temp_file_io:
-                temp_file_io.write(mp4file.read())
+    with open((temp_file := tempfile.NamedTemporaryFile(delete=False)).name, "wb") as temp_file_io:
+        temp_file_io.write(request.FILES["mp4file"].read())
+        file_name = request.FILES["mp4file"].name
 
-            whisper_instance = whisper.load_model("base")
-            video_transcription = whisper_instance.transcribe(temp_file_path)
-            connection_with_storage = get_connection_with_storage()
+        whisper_instance = whisper.load_model("base")
+        video_transcription = whisper_instance.transcribe(temp_file.name)
 
-            index_transcription(mp4file.name, video_transcription["text"])
-            connection_with_storage.upload_file(temp_file_path, bucket_name, mp4file.name)
+        connection_with_storage = get_connection_with_storage()
+        index_transcription(file_name, video_transcription["text"])
+        connection_with_storage.upload_file(temp_file.name, bucket_name, file_name)
+    temp_file.close()
 
     return HttpResponseRedirect("/")
 
@@ -97,7 +96,7 @@ def search_files(request):
         key = hit["_source"].get("mp4name", "")
         details_dict = {}
         details_dict["text"] = hit["_source"].get("text", "")
-        details_dict["url"] = reverse("download_file", kwargs={"file_name": hit["_source"].get("mp4name")}),
+        details_dict["url"] = reverse("download_file", kwargs={"file_name": hit["_source"].get("mp4name")})
         results_details[key] = details_dict
 
     if not results_details:
