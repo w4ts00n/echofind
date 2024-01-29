@@ -5,7 +5,7 @@
 </head>
 <body>
     <h1>Upload MP4 File</h1>
-    <form method="post" enctype="multipart/form-data" action="{% url 'handle_upload' %}">
+    <form method="post" enctype="multipart/form-data" action="{% url "file_api" %}">
         {% csrf_token %}
         <input type="file" name="mp4file" accept="video/*">
         <input type="submit" value="Upload">
@@ -24,7 +24,7 @@
     <ul>
         {% for file in files_list %}
         <li>
-             <a href="{% url 'download_file' file_name=file %}">{{ file }}</a>
+             <a href="{% url 'file_api' %}?file_name={{ file }}">{{ file }}</a>
         </li>
         {% endfor %}
     </ul>
@@ -32,7 +32,7 @@
 <script>
         function searchFiles() {
             var keyword = document.getElementById("searchInput").value;
-            var url = "{% url 'search_files' %}?keyword=" + keyword;
+            var url = "{% url 'search_api' %}?keyword=" + keyword;
 
             fetch(url)
                 .then(response => response.json())
