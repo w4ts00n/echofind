@@ -15,12 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from records.views import render_main_page, handle_upload, download_file, search_files
+from records.views import (render_main_page, SearchView, FileView)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", render_main_page, name="render_main_page"),
-    path("handle_upload/", handle_upload, name="handle_upload"),  # todo: should be /file or /videos/ 'POST'
-    path("download/<path:file_name>/", download_file, name="download_file"),  # todo: same as upload, 'GET'
-    path("search/", search_files, name="search_files"),  # todo: same, e.g. /file 'HEAD' - consider using Django REST
+    path("file/", FileView.as_view(), name="file_api"),
+    path("search/", SearchView.as_view(), name="search_api"),
 ]
