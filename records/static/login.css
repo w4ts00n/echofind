@@ -1,0 +1,114 @@
+html{
+    font-family: Lato, sans-serif;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(176deg,rgb(18,24,27) 50%,rgb(32,39,55) 100%);
+}
+
+.dark{
+    background-color: rgb(18 24 27 / 1);
+    color: rgb(248 248 248 / 1);
+}
+
+.wrapper{
+    width: 420px;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, .2);
+    backdrop-filter: blur(200px);
+    box-shadow: 0 0 10px rgba(255, 255, 255, .2);
+    color: white;
+    border-radius: 10px;
+    padding: 30px 40px;
+}
+
+.wrapper h1{
+    font-family: cubano, sans-serif;
+    font-size: 36px;
+    text-align: center;
+}
+
+.wrapper .input-box{
+    position: relative;
+    width: 100%;
+    height: 50px;
+    margin: 30px 0;
+}
+
+.input-box input{
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    outline: none;
+    border: 2px solid rgba(255, 255, 255, .2);
+    border-radius: 40px;
+    font-family: Lato, sans-serif;
+    font-size: 16px;
+    color: white;
+    padding: 20px 45px 20px 20px;
+}
+
+.input-box input::placeholder{
+    color: white;
+}
+
+.input-box i{
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+}
+
+.wrapper .btn{
+    width: 100%;
+    height: 45px;
+    background: white;
+    border: none;
+    outline: none;
+    border-radius: 40px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+    cursor: pointer;
+    font-family: cubano, sans-serif;
+    font-size: 16px;
+    color: #333;
+    font-weight: 400;
+
+    transition: all 0.2s linear;
+}
+
+.wrapper .btn:hover{
+    background-color: #f97316;
+    border-color: #f97316;
+    color: rgb(255 255 255);
+    box-shadow: inset 0 0 0.5em 0 #f97316, 0 0 0.5em 0 #f97316;
+}
+
+.wrapper .register-link{
+    font-size: 14px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.register-link p span {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.register-link p span:hover{
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+

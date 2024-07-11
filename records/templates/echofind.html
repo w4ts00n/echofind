@@ -1,26 +1,57 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html class="dark">
 <head>
-    <title>Documents</title>
+    <title>Echofind</title>
+    <link rel="stylesheet" href="{% static 'echofind.css' %}">
+    <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet'>
+    <script src="{% static 'echofindScripts.js' %}"></script>
+    
 </head>
 <body>
-    <h1>Upload MP4 File</h1>
-    <form method="post" enctype="multipart/form-data" action="{% url "file_api" %}">
-        {% csrf_token %}
-        <input type="file" name="mp4file" accept="video/*">
-        <input type="submit" value="Upload">
-    </form>
-
-    <h2>Files in the bucket</h2>
-    <form id="searchForm">
-        <input type="text" id="searchInput" placeholder="Search...">
-        <button type="button" onclick="searchFiles()">Search</button>
-    </form>
-
-    <h3>Search Results</h3>
-    <ul id="searchResults"></ul>
-
-    <h2>Files in the bucket</h2>
+    <div class="container">
+        <div>
+            <h1 class="text-6xl">ECHO<span class="gradient-text">FIND</span></h1>
+            <form id="searchForm" onsubmit="event.preventDefault(); searchFiles();">
+                <input class="searchbar" type="text" id="searchInput" placeholder="Search...">
+                <button class="small-btn">SEARCH</button>
+            </form>
+        </div>
+        
+        <div id="user-info">
+            {% if request.session.email %}
+                <p>Logged as: {{ request.session.email }}</p>
+                <button onclick="logoutUser()">Logout</button>
+            {% endif %}
+        </div>
+    
+        <div>
+            <h2 style="margin-bottom: 40px">UPLOAD A FILE</h2>
+            <div id="drag-and-drop-area" class="drag-and-drop-area" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)" ondragleave="dragLeaveHandler(event)">
+                <p> Drag&drop your file here or select a file </p>
+                <button class="select-btn" type="button" onclick="openFileInput()"><span>Select File</span><i></i></button>
+            </div>
+            
+            <form id="uploadForm" method="post" enctype="multipart/form-data" action="{% url "file_api" %}"
+                  ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
+                {% csrf_token %}
+                <input class="display-none" type="file" id="file" name="mp4file" accept="video/*">
+            </form>
+            <div class="loader">Uploading</div>
+        </div>
+    </div>
+    
+    
+    <div style="margin-top: 40px;">
+        <div>
+            <h3 id="searchResultsHeader">Search Results</h3>
+            <ul id="searchResults"></ul>
+            <div id="noResultsMessage">No results</div>
+        </div>
+    </div>
+    
+    <h2 style="margin-top: 30px;">Files in the bucket</h2>
     <ul>
         {% for file in files_list %}
         <li>
@@ -28,33 +59,5 @@
         </li>
         {% endfor %}
     </ul>
-
-<script>
-        function searchFiles() {
-            var keyword = document.getElementById("searchInput").value;
-            var url = "{% url 'search_api' %}?keyword=" + keyword;
-
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    var resultsList = document.getElementById("searchResults");
-                    resultsList.innerHTML = "";
-
-                    if (data.results) {
-                        for (const mp4name in data.results) {
-                            const result = data.results[mp4name];
-                            var listItem = document.createElement("li");
-                            listItem.innerHTML = `<a href="${result.url}">${mp4name}</a> - ${result.text}`;
-                            resultsList.appendChild(listItem);
-                        }
-                    }
-                    else {
-                        var noResultsItem = document.createElement("li");
-                        noResultsItem.innerHTML = "No results";
-                        resultsList.appendChild(noResultsItem);
-                    }
-                });
-        }
-    </script>
 </body>
 </html>

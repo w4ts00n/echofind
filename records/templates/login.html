@@ -1,0 +1,171 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echofind</title>
+    <link rel="stylesheet" href="{% static 'login.css' %}">
+    <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet'>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <div class="wrapper">
+        <form id="userLoginForm" action="">
+            <h1>Login</h1>
+            {% csrf_token %}
+            <div class="input-box">
+                <input type="email" id="login-email" placeholder="E-mail" required>
+                <i class='bx bxs-user'></i>
+            </div>
+            
+            <div class="input-box">
+                <input type="password" id="login-password" placeholder="Password" required>
+                <i class='bx bxs-lock-alt' ></i>
+            </div>
+            <button id="loginBtn" class="btn">Sign in</button>
+            
+            <div class="register-link">
+                <p>Don't have an account? <span id="showRegisterForm">Register!</span></p>
+            </div>
+        </form>
+        
+        <form id="userRegisterForm" action="" style="display: none;">
+            <h1>Register</h1>
+            {% csrf_token %}
+            <div class="input-box">
+                <input type="email" id="register-email" placeholder="E-mail" required>
+                <i class='bx bxs-user'></i>
+            </div>
+            
+            <div class="input-box">
+                <input type="password" id="register-password" placeholder="Password" required>
+                <i class='bx bxs-lock-alt' ></i>
+            </div>
+            <button id="registerBtn" class="btn">Sign up</button>
+            
+            <div class="register-link">
+                <p>Already have an account? <span id="showLoginForm">Sign in!</span></p>
+            </div>
+        </form>
+    </div>
+<script>
+        document.getElementById('showRegisterForm').addEventListener('click', function() {
+            document.getElementById('userLoginForm').style.display = 'none';
+            document.getElementById('userRegisterForm').style.display = 'block';
+        });
+        
+        document.getElementById('showLoginForm').addEventListener('click', function() {
+            document.getElementById('userRegisterForm').style.display = 'none';
+            document.getElementById('userLoginForm').style.display = 'block';
+        });
+    
+        document.addEventListener('DOMContentLoaded', function() {
+            var loginBtn = document.getElementById('loginBtn');
+            var emailInput = document.getElementById('login-email');
+            var passwordInput = document.getElementById('login-password');
+        
+            
+            loginBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                
+                var email = emailInput.value;
+                var password = passwordInput.value;
+                
+                
+                loginUser(email, password);
+            });
+        });
+        
+        function loginUser(email, password) {
+            var formData = new FormData();
+            formData.append('email', email);
+            formData.append('password', password);
+        
+            // Ustaw opcje dla zapytania fetch
+            var requestOptions = {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie("csrftoken"),
+                },
+                redirect: 'follow'
+            };
+        
+            
+            fetch('/login/', requestOptions)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Odpowiedz serwera ", data)
+                    if (data.error) {
+                        console.error('Błąd logowania:', data.error);
+                    } else {
+                        console.log('Zalogowanie zakończona sukcesem!');
+                        localStorage.setItem("idToken", data.idToken);
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Błąd podczas wysyłania żądania:', error));
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            var registerBtn = document.getElementById('registerBtn');
+            var emailInput = document.getElementById('register-email');
+            var passwordInput = document.getElementById('register-password');
+            
+            registerBtn.addEventListener('click', function(event) {
+                event.preventDefault(); 
+                
+                var email = emailInput.value;
+                var password = passwordInput.value;
+                
+                registerUser(email, password);
+            });
+        });
+        
+        function registerUser(email, password) {
+            var formData = new FormData();
+            formData.append('email', email);
+            formData.append('password', password);
+            
+            var requestOptions = {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie("csrftoken"),
+                },
+                redirect: 'follow'
+            };
+        
+            
+            fetch('/register/', requestOptions)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Błąd rejestracji:', data.error);
+                    } else {
+                        console.log('Rejestracja zakończona sukcesem!');
+                        localStorage.setItem("idToken", data.idToken);
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Błąd podczas wysyłania żądania:', error));
+        }
+        
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>
