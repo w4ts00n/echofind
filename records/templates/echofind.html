@@ -10,6 +10,14 @@
     
 </head>
 <body>
+
+    <div id="user-info">
+        {% if request.session.email %}
+            <p>Logged as: {{ request.session.email }}</p>
+            <button class="small-btn logout-btn" onclick="logoutUser()">Logout</button>
+        {% endif %}
+    </div>
+    
     <div class="container">
         <div>
             <h1 class="text-6xl">ECHO<span class="gradient-text">FIND</span></h1>
@@ -19,12 +27,12 @@
             </form>
         </div>
         
-        <div id="user-info">
-            {% if request.session.email %}
-                <p>Logged as: {{ request.session.email }}</p>
-                <button onclick="logoutUser()">Logout</button>
-            {% endif %}
-        </div>
+{#        <div id="user-info">#}
+{#            {% if request.session.email %}#}
+{#                <p>Logged as: {{ request.session.email }}</p>#}
+{#                <button onclick="logoutUser()">Logout</button>#}
+{#            {% endif %}#}
+{#        </div>#}
     
         <div>
             <h2 style="margin-bottom: 40px">UPLOAD A FILE</h2>
