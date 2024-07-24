@@ -11,6 +11,11 @@
 </head>
 <body>
     <div class="wrapper">
+        <form id="verifyEmailForm" action="" style="display: none;">
+            <h1>Verify Email!</h1>
+            <p>Verification Email has been sent! Please verify your email before logging in.</p>
+        </form>
+        
         <form id="userLoginForm" action="">
             <h1>Login</h1>
             {% csrf_token %}
@@ -30,6 +35,10 @@
             </div>
         </form>
         
+        <form class="invalid-form" id="errorForm" action="">
+            <p id="errorMessage"></p>
+        </form>
+        
         <form id="userRegisterForm" action="" style="display: none;">
             <h1>Register</h1>
             {% csrf_token %}
@@ -42,8 +51,8 @@
                 <input type="password" id="register-password" placeholder="Password" required>
                 <i class='bx bxs-lock-alt' ></i>
             </div>
-            <button id="registerBtn" class="btn">Sign up</button>
             
+            <button id="registerBtn" class="btn">Sign up</button>
             <div class="register-link">
                 <p>Already have an account? <span id="showLoginForm">Sign in!</span></p>
             </div>
@@ -51,11 +60,14 @@
     </div>
 <script>
         document.getElementById('showRegisterForm').addEventListener('click', function() {
+            document.getElementById("errorForm").style.display = "none";
+            document.getElementById("verifyEmailForm").style.display = "none";
             document.getElementById('userLoginForm').style.display = 'none';
             document.getElementById('userRegisterForm').style.display = 'block';
         });
         
         document.getElementById('showLoginForm').addEventListener('click', function() {
+            document.getElementById("errorForm").style.display = "none";
             document.getElementById('userRegisterForm').style.display = 'none';
             document.getElementById('userLoginForm').style.display = 'block';
         });
@@ -76,13 +88,46 @@
                 loginUser(email, password);
             });
         });
+            
+        function displayError(message, borderColor = "", buttonColor = ""){
+            document.getElementById("errorMessage").textContent = message;
+            document.getElementById("errorForm").style.display = "block";
+            
+            if (borderColor) {
+                document.getElementById("login-email").style.borderColor = borderColor;
+            }
+            
+            if (buttonColor){
+                document.getElementById("loginBtn").style.background = buttonColor;
+            }
+        }    
+            
+        function handleError(error){
+            document.getElementById("verifyEmailForm").style.display = "none";
+            document.getElementById("errorForm").style.display = "none";
+            document.getElementById("login-email").style.borderColor = "";
+            document.getElementById("loginBtn").style.background = "";
+            
+            if (error === "Email not verified"){
+                document.getElementById("verifyEmailForm").style.display = "block";
+                document.getElementById("userLoginForm").reset();
+            } else if (error === "INVALID_LOGIN_CREDENTIALS"){
+                displayError("Incorrect password or email. Please try again.", "", "rgb(248, 107, 99)");
+            } else if (error === "INVALID_EMAIL"){
+                displayError("Invalid email format. Please try again", "rgb(248, 107, 99)");
+            } else if (error === "EMAIL_EXISTS"){
+                displayError("Email is already associated with an account. Please use another email address.")
+                document.getElementById("register-email").style.borderColor = "rgb(248, 107, 99)";
+            } else if (error === "WEAK_PASSWORD : Password should be at least 6 characters"){
+                displayError("Password too weak. Password should be at least 6 characters")
+            }
+        }   
         
         function loginUser(email, password) {
             var formData = new FormData();
             formData.append('email', email);
             formData.append('password', password);
         
-            // Ustaw opcje dla zapytania fetch
             var requestOptions = {
                 method: 'POST',
                 body: formData,
@@ -91,21 +136,20 @@
                 },
                 redirect: 'follow'
             };
-        
             
             fetch('/login/', requestOptions)
                 .then(response => response.json())
                 .then(data => {
-                    console.log("Odpowiedz serwera ", data)
                     if (data.error) {
-                        console.error('Błąd logowania:', data.error);
+                        handleError(data.error);
                     } else {
-                        console.log('Zalogowanie zakończona sukcesem!');
+                        console.log('Login successful!');
                         localStorage.setItem("idToken", data.idToken);
                         location.reload();
                     }
                 })
-                .catch(error => console.error('Błąd podczas wysyłania żądania:', error));
+                .catch(error => console.error('Request error:', error));
+                
         }
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -142,11 +186,12 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
-                        console.error('Błąd rejestracji:', data.error);
+                        handleError(data.error);
                     } else {
-                        console.log('Rejestracja zakończona sukcesem!');
-                        localStorage.setItem("idToken", data.idToken);
-                        location.reload();
+                        document.getElementById("userRegisterForm").style.display = "none";
+                        document.getElementById("userLoginForm").style.display = "block";
+                        document.getElementById("userLoginForm").reset();
+                        document.getElementById("verifyEmailForm").style.display = "block";
                     }
                 })
                 .catch(error => console.error('Błąd podczas wysyłania żądania:', error));

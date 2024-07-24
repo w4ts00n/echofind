@@ -98,6 +98,7 @@ body{
     font-size: 14px;
     text-align: center;
     margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .register-link p span {
@@ -111,4 +112,19 @@ body{
     cursor: pointer;
 }
 
+#verifyEmailForm p{
+    text-align: center;
+    margin-bottom: 30px;
+}
 
+.invalid-form{
+    display: none;
+    background-color: rgb(50 21 20);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.invalid-form p{
+    text-align: center;
+    color: rgb(248 107 99);
+}

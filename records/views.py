@@ -31,7 +31,9 @@ class FileView(APIView):
         content_type = mimetypes.guess_type(file_name)[0]
 
         connection_with_storage = get_connection_with_storage()
-        file = connection_with_storage.get_object(Bucket=bucket_name, Key=file_name)
+        owner_id = request.session.get('localId')
+        file_key = f"{owner_id}/{file_name}"
+        file = connection_with_storage.get_object(Bucket=bucket_name, Key=file_key)
         file_body_content = file["Body"].read()
 
         response = generate_file_response(file_body_content, content_type, file_name)
@@ -44,6 +46,7 @@ class FileView(APIView):
         with open((temp_file := tempfile.NamedTemporaryFile(delete=False)).name, "wb") as temp_file_io:
             temp_file_io.write(request.FILES["mp4file"].read())
             file_name = request.FILES["mp4file"].name
+            owner_id = request.session.get("localId")
 
             whisper_instance = whisper.load_model("base")
             video_transcription = whisper_instance.transcribe(temp_file.name)
@@ -51,12 +54,13 @@ class FileView(APIView):
             connection_with_storage = get_connection_with_storage()
 
             file_name_without_extension = Path(file_name).stem
-            thumbnail_path = f"{file_name_without_extension}_thumbnail.jpg"
+            thumbnail_path = f"{owner_id}/{file_name_without_extension}_thumbnail.jpg"
             create_and_upload_thumbnail(temp_file.name, thumbnail_path)
 
-            owner_id = request.session.get("localId")
             index_transcription(file_name, video_transcription["text"], owner_id)
-            connection_with_storage.upload_file(temp_file.name, bucket_name, file_name)
+
+            storage_file_path = f"{owner_id}/{file_name}"
+            connection_with_storage.upload_file(temp_file.name, bucket_name, storage_file_path)
 
         temp_file.close()
 
@@ -124,10 +128,11 @@ def index_transcription(file_name: str, transcription: str, owner_id: str):
     )
 
 
-def get_files_list():
+def get_files_list(owner_id: str):
     connection_with_storage = get_connection_with_storage()
-    s3_files = connection_with_storage.list_objects_v2(Bucket=bucket_name)
-    files_list = [obj["Key"] for obj in s3_files.get("Contents", [])]
+    prefix = f"{owner_id}/"
+    s3_files = connection_with_storage.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+    files_list = [obj["Key"] for obj in s3_files.get("Contents", []) if obj["Key"].endswith(".mp4")]
     return files_list
 
 
@@ -150,6 +155,24 @@ def generate_file_response(file_body_content: bytes, content_type: str, file_nam
     return response
 
 
+def check_email_verified(id_token: str):
+    api_key = firebaseConfig["apiKey"]
+    get_user_data_url = f"https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={api_key}"
+
+    data = {
+        "idToken": id_token,
+    }
+
+    response = requests.post(get_user_data_url, data=data)
+
+    if response.status_code == 200:
+        user_data = response.json()
+        user = user_data.get("users", [])[0] if user_data.get("users") else {}
+        return user.get("emailVerified", False)
+    else:
+        return False
+
+
 def authenticate_user(email: str, password: str, url: str):
     data = {"email": email,
             "password": password,
@@ -169,21 +192,32 @@ def register_user(request):
 
         if response.status_code == 200:
             user_data = response.json()
-            request.session["idToken"] = user_data["idToken"]
             request.session["localId"] = user_data["localId"]
             request.session["email"] = user_data["email"]
 
-            payload = {
+            email_verification_url = f"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={api_key}"
+            email_verification_data = {
+                "requestType": "VERIFY_EMAIL",
                 "idToken": user_data.get("idToken"),
-                "email": user_data.get("email"),
-                "refreshToken": user_data.get("refreshToken"),
-                "expiresIn": user_data.get("expiresIn"),
-                "localId": user_data.get("localId"),
             }
-            return JsonResponse(payload)
+
+            email_verification_response = requests.post(email_verification_url, data=email_verification_data)
+
+            if email_verification_response.status_code == 200:
+                payload = {
+                    "idToken": user_data.get("idToken"),
+                    "email": user_data.get("email"),
+                    "refreshToken": user_data.get("refreshToken"),
+                    "expiresIn": user_data.get("expiresIn"),
+                    "localId": user_data.get("localId"),
+                }
+                return JsonResponse(payload)
+            else:
+                error_message = response.json().get("error", {}).get("message", "Failed to send verification email")
+                return JsonResponse({"error": error_message}, status=email_verification_response.status_code)
         else:
             error_message = response.json().get("error", {}).get("message", "Unknown error occurred")
-            return HttpResponse(f"Registration failed: {error_message}", status=response.status_code)
+            return JsonResponse({"error": error_message}, status=response.status_code)
 
 
 def login_user(request):
@@ -197,6 +231,11 @@ def login_user(request):
 
         if response.status_code == 200:
             user_data = response.json()
+            id_token = user_data["idToken"]
+
+            if not check_email_verified(id_token):
+                return JsonResponse({"error": "Email not verified"}, status=400)
+
             request.session["idToken"] = user_data["idToken"]
             request.session["localId"] = user_data["localId"]
             request.session["email"] = user_data["email"]
@@ -212,7 +251,7 @@ def login_user(request):
             return JsonResponse(payload)
         else:
             error_message = response.json().get("error", {}).get("message", "Unknown error occurred")
-            return HttpResponse(f"Login failed: {error_message}", status=response.status_code)
+            return JsonResponse({"error": error_message}, status=response.status_code)
 
 
 def logout_user(request):
@@ -239,5 +278,8 @@ def render_main_page(request):
     if not request.session.get("idToken"):
         return render(request, "login.html")
 
-    files_list = get_files_list()
-    return render(request, "echofind.html", {"files_list": files_list})
+    owner_id = request.session.get("localId")
+    files_list = get_files_list(owner_id)
+
+    files_names = [Path(file).name for file in files_list]
+    return render(request, "echofind.html", {"files_list": files_names})

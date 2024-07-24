@@ -3,7 +3,6 @@ function searchFiles() {
     var url = "/search/?keyword=" + keyword;
 
     const idToken = localStorage.getItem("idToken");
-    console.log("idToken from local storage: ", idToken)
 
     var requestOptions = {
         method: 'GET',
@@ -11,7 +10,6 @@ function searchFiles() {
             'Authorization': `Bearer ${idToken}`,
         }
     };
-
 
     fetch(url, requestOptions)
         .then(response => response.json())
@@ -42,7 +40,6 @@ function searchFiles() {
             else {
                 document.getElementById("noResultsMessage").style.display = "block";
             }
-
         });
 }
 
@@ -102,11 +99,17 @@ function playVideo(videoUrl, thumbnail) {
     });
 }
 
-// document.getElementById("searchInput").addEventListener("input", function() {
-//     clearTimeout(this.searchTimer); {# using this.searchTimer so creating a global variable is not necessary
-//     this.searchTimer = setTimeout(function() {
-//         searchFiles();
-//     }, 2000);});
+document.getElementById("searchInput").addEventListener("input", function() {
+    clearTimeout(this.searchTimer); //using this.searchTimer so creating a global variable is not necessary
+    this.searchTimer = setTimeout(function() {
+        searchFiles();
+    }, 2000);}
+);
+
+document.getElementById("searchForm").addEventListener("submit", function (event){
+    event.preventDefault();
+    clearTimeout(document.getElementById("searchInput").searchTimer);
+});
 
 function toggleTranscription(button) {
     var transcription = button.previousElementSibling;
@@ -213,6 +216,39 @@ function openFileInput() {
 }
 
 document.getElementById('drag-and-drop-area').addEventListener('dragend', dragLeaveHandler);
+
+function downloadFile(fileName){
+    const idToken = localStorage.getItem("idToken")
+
+    var url = `/file/?file_name=${fileName}`
+
+    var requestOptions = {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${idToken}`,
+        }
+    };
+
+    fetch(url, requestOptions)
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            } else {
+                throw new Error('File download failed');
+            }
+        })
+        .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
 
 function getCookie(name) {
     var cookieValue = null;

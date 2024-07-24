@@ -6,11 +6,10 @@
     <link rel="stylesheet" href="{% static 'echofind.css' %}">
     <link href="https://fonts.cdnfonts.com/css/cubano" rel="stylesheet">
     <link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet'>
-    <script src="{% static 'echofindScripts.js' %}"></script>
+    <script src="{% static 'echofindScripts.js' %}" defer></script>
     
 </head>
 <body>
-
     <div id="user-info">
         {% if request.session.email %}
             <p>Logged as: {{ request.session.email }}</p>
@@ -26,21 +25,13 @@
                 <button class="small-btn">SEARCH</button>
             </form>
         </div>
-        
-{#        <div id="user-info">#}
-{#            {% if request.session.email %}#}
-{#                <p>Logged as: {{ request.session.email }}</p>#}
-{#                <button onclick="logoutUser()">Logout</button>#}
-{#            {% endif %}#}
-{#        </div>#}
-    
+
         <div>
             <h2 style="margin-bottom: 40px">UPLOAD A FILE</h2>
             <div id="drag-and-drop-area" class="drag-and-drop-area" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)" ondragleave="dragLeaveHandler(event)">
                 <p> Drag&drop your file here or select a file </p>
                 <button class="select-btn" type="button" onclick="openFileInput()"><span>Select File</span><i></i></button>
             </div>
-            
             <form id="uploadForm" method="post" enctype="multipart/form-data" action="{% url "file_api" %}"
                   ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
                 {% csrf_token %}
@@ -60,10 +51,17 @@
     </div>
     
     <h2 style="margin-top: 30px;">Files in the bucket</h2>
+{#    <ul>#}
+{#        {% for file in files_list %}#}
+{#        <li>#}
+{#             <a href="{% url 'file_api' %}?file_name={{ file }}">{{ file }}</a>#}
+{#        </li>#}
+{#        {% endfor %}#}
+{#    </ul>#}
     <ul>
         {% for file in files_list %}
         <li>
-             <a href="{% url 'file_api' %}?file_name={{ file }}">{{ file }}</a>
+             <span class="files-link" onclick="downloadFile('{{ file }}')">{{ file }}</span>
         </li>
         {% endfor %}
     </ul>
