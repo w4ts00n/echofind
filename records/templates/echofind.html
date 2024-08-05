@@ -42,22 +42,13 @@
     </div>
     
     
-    <div style="margin-top: 40px;">
-        <div>
-            <h3 id="searchResultsHeader">Search Results</h3>
-            <ul id="searchResults"></ul>
-            <div id="noResultsMessage">No results</div>
-        </div>
+    <div class="search-container">
+        <h3 id="searchResultsHeader">Search Results</h3>
+        <ul id="searchResults" class="results-list"></ul>
+        <div id="noResultsMessage">No results</div>
     </div>
     
-    <h2 style="margin-top: 30px;">Files in the bucket</h2>
-{#    <ul>#}
-{#        {% for file in files_list %}#}
-{#        <li>#}
-{#             <a href="{% url 'file_api' %}?file_name={{ file }}">{{ file }}</a>#}
-{#        </li>#}
-{#        {% endfor %}#}
-{#    </ul>#}
+    <h2 style="margin-top: 30px;">Uploaded files</h2>
     <ul>
         {% for file in files_list %}
         <li>

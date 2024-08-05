@@ -26,8 +26,8 @@ function searchFiles() {
                     listItem.innerHTML = `
                     <div class="results">
                         <img class="thumbnail" alt="Thumbnail" onclick="playVideo('${result.url}', this)">
-                        <span>${mp4name}</span><span class="transcription">${result.text}</span>
-                        <button class="small-btn" onclick="toggleTranscription(this)">Show Transcription</button>
+                        <span class="file-name">${mp4name}</span><span class="transcription">${result.text}</span>
+                        <button class="small-btn trans-btn" onclick="toggleTranscription(this)">Transcription</button>
                     </div>
                         `;
                     resultsList.appendChild(listItem);
@@ -118,7 +118,7 @@ function toggleTranscription(button) {
         button.textContent = "Hide Transcription";
     } else {
     transcription.style.display = "none";
-    button.textContent = "Show Transcription";
+    button.textContent = "Transcription";
     }
 }
 

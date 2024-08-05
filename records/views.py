@@ -27,7 +27,7 @@ from firebase_admin import auth
 
 class FileView(APIView):
     def get(self, request):
-        file_name = request.GET.get("file_name", "")
+        file_name = request.GET.get("file_name")
         content_type = mimetypes.guess_type(file_name)[0]
 
         connection_with_storage = get_connection_with_storage()
@@ -48,7 +48,7 @@ class FileView(APIView):
             file_name = request.FILES["mp4file"].name
             owner_id = request.session.get("localId")
 
-            whisper_instance = whisper.load_model("base")
+            whisper_instance = whisper.load_model("large")
             video_transcription = whisper_instance.transcribe(temp_file.name)
 
             connection_with_storage = get_connection_with_storage()
@@ -80,25 +80,36 @@ class SearchView(APIView):
                         {"match": {"owner_id": owner_id}}
                     ]
                 }
+            },
+            "highlight": {
+                "fields": {
+                    "text": {
+                        "pre_tags": ["<em>"],
+                        "post_tags": ["</em>"],
+                    }
+                }
             }
         }
 
         hits = es.search(index="my_index", body=search_query).get("hits", {}).get("hits", [])
 
-        results_details = {}
+        results = {}
         for hit in hits:
-            key = hit["_source"].get("mp4name", "")
-            details_dict = {}
-            details_dict["text"] = hit["_source"].get("text", "")
-            details_dict["url"] = reverse("file_api") + f"?file_name={hit['_source'].get('mp4name')}"
-            thumbnail_path = f"{Path(hit['_source'].get('mp4name')).stem}_thumbnail.jpg"
-            details_dict["thumbnail_url"] = reverse("file_api") + f"?file_name={thumbnail_path}"
-            results_details[key] = details_dict
+            original_json_document = hit["_source"]
+            matched_mp4_filename = original_json_document.get("mp4name")
 
-        if not results_details:
+            search_result_details_dict = {}
+            search_result_details_dict["text"] = hit["highlight"].get("text")
+            search_result_details_dict["url"] = reverse("file_api") + f"?file_name={matched_mp4_filename}"
+
+            thumbnail_path = f"{Path(matched_mp4_filename).stem}_thumbnail.jpg"
+            search_result_details_dict["thumbnail_url"] = reverse("file_api") + f"?file_name={thumbnail_path}"
+            results[matched_mp4_filename] = search_result_details_dict
+
+        if not results:
             return JsonResponse({"message": "No results"}, status=404)
 
-        return JsonResponse({"results": results_details}, status=200)
+        return JsonResponse({"results": results}, status=200)
 
 
 def get_connection_with_storage():
