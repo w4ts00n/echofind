@@ -10,12 +10,12 @@ from PIL import Image
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from pathlib import Path
 from .credentials import (
-    aws_access_key,
+    aws_access_key_id,
     aws_secret_access_key,
-    bucket_name,
+    aws_bucket_name,
     es_hosts,
     es_api_key,
-    firebaseConfig
+    firebase_api_key
 )
 import whisper
 import boto3
@@ -33,7 +33,7 @@ class FileView(APIView):
         connection_with_storage = get_connection_with_storage()
         owner_id = request.session.get('localId')
         file_key = f"{owner_id}/{file_name}"
-        file = connection_with_storage.get_object(Bucket=bucket_name, Key=file_key)
+        file = connection_with_storage.get_object(Bucket=aws_bucket_name, Key=file_key)
         file_body_content = file["Body"].read()
 
         response = generate_file_response(file_body_content, content_type, file_name)
@@ -60,7 +60,7 @@ class FileView(APIView):
             index_transcription(file_name, video_transcription["text"], owner_id)
 
             storage_file_path = f"{owner_id}/{file_name}"
-            connection_with_storage.upload_file(temp_file.name, bucket_name, storage_file_path)
+            connection_with_storage.upload_file(temp_file.name, aws_bucket_name, storage_file_path)
 
         temp_file.close()
 
@@ -115,7 +115,7 @@ class SearchView(APIView):
 def get_connection_with_storage():
     s3 = boto3.client(
         "s3",
-        aws_access_key_id=aws_access_key,
+        aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
         use_ssl=False,
     )
@@ -123,7 +123,7 @@ def get_connection_with_storage():
 
 
 def get_connection_with_database():
-    es = Elasticsearch(es_hosts, api_key=es_api_key)
+    es = Elasticsearch(hosts=es_hosts, api_key=es_api_key)
     return es
 
 
@@ -142,7 +142,7 @@ def index_transcription(file_name: str, transcription: str, owner_id: str):
 def get_files_list(owner_id: str):
     connection_with_storage = get_connection_with_storage()
     prefix = f"{owner_id}/"
-    s3_files = connection_with_storage.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+    s3_files = connection_with_storage.list_objects_v2(Bucket=aws_bucket_name, Prefix=prefix)
     files_list = [obj["Key"] for obj in s3_files.get("Contents", []) if obj["Key"].endswith(".mp4")]
     return files_list
 
@@ -157,7 +157,7 @@ def create_and_upload_thumbnail(video_path: str, output_thumbnail_path: str, tim
     thumbnail_image.save(thumbnail_file_io, format='JPEG')
     thumbnail_file_io.seek(0)
 
-    connection_with_storage.upload_fileobj(thumbnail_file_io, bucket_name, output_thumbnail_path)
+    connection_with_storage.upload_fileobj(thumbnail_file_io, aws_bucket_name, output_thumbnail_path)
 
 
 def generate_file_response(file_body_content: bytes, content_type: str, file_name: str):
@@ -167,7 +167,7 @@ def generate_file_response(file_body_content: bytes, content_type: str, file_nam
 
 
 def check_email_verified(id_token: str):
-    api_key = firebaseConfig["apiKey"]
+    api_key = firebase_api_key
     get_user_data_url = f"https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={api_key}"
 
     data = {
@@ -196,7 +196,7 @@ def register_user(request):
     if request.method == "POST":
         email = request.POST["email"]
         password = request.POST["password"]
-        api_key = firebaseConfig["apiKey"]
+        api_key = firebase_api_key
 
         register_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={api_key}"
         response = authenticate_user(email, password, register_url)
@@ -235,7 +235,7 @@ def login_user(request):
     if request.method == "POST":
         email = request.POST["email"]
         password = request.POST["password"]
-        api_key = firebaseConfig["apiKey"]
+        api_key = firebase_api_key
 
         url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
         response = authenticate_user(email, password, url)
