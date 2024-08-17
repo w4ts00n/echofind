@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from PIL import Image
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from pathlib import Path
-from .credentials import (
+from .secrets import (
     aws_access_key_id,
     aws_secret_access_key,
     aws_bucket_name,
