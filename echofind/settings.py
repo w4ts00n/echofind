@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 import firebase_admin
 from firebase_admin import credentials
@@ -28,7 +28,9 @@ SECRET_KEY = "django-insecure-4c1eiv_v&$agza*@p%h%1$3m_j$wvj%&duwk8ps^g%=7$6ag=2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["echofind.applikuapp.com", "0.0.0.0", "127.0.0.1"]
+
+CSRF_TRUSTED_ORIGINS = ['https://echofind.applikuapp.com', 'https://127.0.0.1']
 
 
 # Application definition
@@ -121,7 +123,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "records/static/"
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'records/static/')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
