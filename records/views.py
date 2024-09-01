@@ -48,7 +48,7 @@ class FileView(APIView):
             file_name = request.FILES["mp4file"].name
             owner_id = request.session.get("localId")
 
-            whisper_instance = whisper.load_model("large")
+            whisper_instance = whisper.load_model("base")
             video_transcription = whisper_instance.transcribe(temp_file.name)
 
             connection_with_storage = get_connection_with_storage()
