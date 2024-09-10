@@ -158,7 +158,7 @@ function dropHandler(event) {
 
     document.querySelector('.loader').style.display = 'block';
 
-    sendFIleAndTranscriptionToDatabasesAndCreateThumbnail();
+    sendFileAndTranscriptionToDatabasesAndCreateThumbnail();
 }
 
 function dragLeaveHandler(event) {
@@ -173,7 +173,7 @@ function handleFiles(files) {
     input.files = files;
 }
 
-function sendFIleAndTranscriptionToDatabasesAndCreateThumbnail() {
+function sendFileAndTranscriptionToDatabasesAndCreateThumbnail() {
     document.querySelector('.loader').style.display = 'block';
     document.getElementById('drag-and-drop-area').style.display = 'none';
 
@@ -195,6 +195,7 @@ function sendFIleAndTranscriptionToDatabasesAndCreateThumbnail() {
     .then(response => {
         if (response.ok) {
             console.log('File uploaded successfully');
+            location.reload();
         } else {
             console.error('File upload failed');
         }
@@ -211,7 +212,7 @@ function sendFIleAndTranscriptionToDatabasesAndCreateThumbnail() {
 function openFileInput() {
     document.getElementById('file').click()
     document.getElementById('file').addEventListener('change', function() {
-    sendFIleAndTranscriptionToDatabasesAndCreateThumbnail();
+    sendFileAndTranscriptionToDatabasesAndCreateThumbnail();
     });
 }
 

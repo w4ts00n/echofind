@@ -28,9 +28,9 @@ SECRET_KEY = "django-insecure-4c1eiv_v&$agza*@p%h%1$3m_j$wvj%&duwk8ps^g%=7$6ag=2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["echofind.applikuapp.com", "0.0.0.0", "127.0.0.1"]
+ALLOWED_HOSTS = ["echofind.pl", "echofind.applikuapp.com", "0.0.0.0", "127.0.0.1"]
 
-CSRF_TRUSTED_ORIGINS = ['https://echofind.applikuapp.com', 'https://127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ["https://echofind.pl", "https://echofind.applikuapp.com", "https://127.0.0.1"]
 
 
 # Application definition
