@@ -3,7 +3,7 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from core.services.file_service import FileService
+from core.services.media_service import MediaService
 from core.services.search_service import SearchService
 from core.services.auth_service import AuthService
 
@@ -13,7 +13,7 @@ class FileView(APIView):
         file_name = request.GET.get("file_name")
         owner_id = request.session.get('localId')
 
-        response = FileService.get_file(file_name, owner_id)
+        response = MediaService.get_media(file_name, owner_id)
         return response
 
     def post(self, request):
@@ -23,7 +23,7 @@ class FileView(APIView):
         file = request.FILES["mp4file"]
         owner_id = request.session.get("localId")
 
-        FileService.upload_video_and_transcription(file, owner_id)
+        MediaService.upload_video_and_transcription(file, owner_id)
         return HttpResponseRedirect("/")
 
 
@@ -78,7 +78,7 @@ class LoginView(APIView):
         email = request.POST["email"]
         password = request.POST["password"]
 
-        response = AuthService.login_user(email, password)
+        response = AuthService.authenticate_user(email, password)
 
         if response.status_code == 200:
             user_data = response.json()
@@ -122,5 +122,5 @@ def render_main_page(request):
 
     owner_id = request.session.get("localId")
 
-    files_names = FileService.get_files_list(owner_id)
+    files_names = MediaService.get_media_list(owner_id)
     return render(request, "echofind.html", {"files_list": files_names})

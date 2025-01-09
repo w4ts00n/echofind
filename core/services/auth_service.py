@@ -4,28 +4,25 @@ from firebase_admin import auth
 
 
 class AuthService:
+    register_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={firebase_api_key}"
+    login_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={firebase_api_key}"
+
     @staticmethod
-    def authenticate_user(email: str, password: str, url: str):
+    def send_request_to_firebase_auth(email: str, password: str, url: str):
         data = {"email": email,
                 "password": password,
                 "returnSecureToken": True}
         response = requests.post(url, data=data)
         return response
 
-    @staticmethod
-    def register_user(email: str, password: str):
-        api_key = firebase_api_key
-
-        register_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={api_key}"
-        response = AuthService.authenticate_user(email, password, register_url)
+    @classmethod
+    def register_user(cls, email: str, password: str):
+        response = cls.send_request_to_firebase_auth(email, password, cls.register_url)
         return response
 
-    @staticmethod
-    def login_user(email: str, password: str):
-        api_key = firebase_api_key
-
-        login_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
-        response = AuthService.authenticate_user(email, password, login_url)
+    @classmethod
+    def authenticate_user(cls, email: str, password: str):
+        response = cls.send_request_to_firebase_auth(email, password, cls.login_url)
         return response
 
     @staticmethod
